@@ -6,34 +6,37 @@ const Settings = require('./Settings.jsx');
 const { inject, uninject } = require('powercord/injector');
 
 module.exports = class HideChannels extends Plugin {
-  startPlugin () {
-    const idlist = this.settings.get('idlist', '');
+  setApi = powercord.api.settings
+  patches = ["textchannel-patch", "voicechannel-patch"]
 
-    powercord.api.settings.registerSettings('hidechannels', {
+  startPlugin () {
+    this.setApi.registerSettings('hidechannels', {
       category: this.entityID,
       label: 'Hide Channels',
       render: Settings
     });
 
-    this.log(idlist)
-
-    this.patchChannel(idlist) // Remmember to add uninject
+    this.patchChannel()
   }
 
-  async patchChannel(idlist) {
-    const Channel = await getModule(m => (m.__powercordOriginal_default || m.default)?.toString().includes('isDefaultChannel'))
-    console.dir(Channel)
+  async patchChannel() {
+    const textPromise = getModule(m => (m.__powercordOriginal_default || m.default)?.toString().includes('isDefaultChannel'))
+    const voicePromise = getModule(m => {return (m.__powercordOriginal_default || m.default)?.toString().includes('embeddedApplication')})
 
-    inject('test-patch', Channel, 'default', (_, res) => {
-      if (idlist.includes(res.props.channel.id)) {
-        res = React.createElement("p", {style: {display: "none"}})
-      }
-      return res;
+    const channels = await Promise.all([textPromise, voicePromise])
+
+    this.patches.forEach((name, index) => {
+      inject(name, channels[index], 'default', (_, res) => {
+        if (powercord.pluginManager.plugins.get(this.entityID).settings.get('idlist', [""]).includes(res.props.channel.id)) {
+          res = React.createElement("p", {style: {display: "none"}})
+        }
+        return res;
+      });
     });
   }
 
   pluginWillUnload () {
-    powercord.api.settings.unregisterSettings('hidechannels');
-    uninject('test-patch');
+    this.setApi.unregisterSettings('hidechannels');
+    this.patches.forEach(name => uninject(name))
   }
 };
