@@ -1,11 +1,8 @@
 const { React } = require("powercord/webpack");
 const { ButtonItem } = require("powercord/components/settings");
 
+// TODO: Make the channel items more distinct/seperate from the actual settings
 module.exports = ({ getSetting, updateSetting, settings }) => {
-  const settingsApi = powercord.pluginManager.plugins.get("hidechannels").settings;
-
-  const details = getSetting("details", []);
-
   const Note = ({ id, guild_id, type }) => (
     <div style={{ display: "flex", flexFlow: "column", marginTop: "8px" }}>
       <span>
@@ -21,8 +18,8 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
   );
 
   const removeAll = () => {
-    settingsApi.delete("idlist");
-    settingsApi.delete("details");
+    updateSetting("idlist", []);
+    updateSetting("details", []);
   };
 
   const removeID = (id) => {
@@ -62,7 +59,7 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
       >
         Reset
       </ButtonItem>
-      {details.map(({ name, guild_id, id, type }) => (
+      {getSetting("details", []).map(({ name, guild_id, id, type }) => (
         <ButtonItem
           note={<Note guild_id={guild_id} id={id} type={type} />}
           button="Remove"

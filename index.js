@@ -7,7 +7,7 @@ const Settings = require("./Settings.jsx");
 
 module.exports = class HideChannels extends Plugin {
   setApi = powercord.api.settings;
-  patches = ["textchannel-patch", "voicechannel-patch"];
+  patches = ["hidechannels-textchannel-patch", "hidechannels-voicechannel-patch"];
   moduleNames = ["ConnectedTextChannel", "ConnectedVoiceChannel"]
   moduleError;
 
@@ -20,30 +20,13 @@ module.exports = class HideChannels extends Plugin {
       render: Settings,
     });
 
-    this.patchContextMenu()
     this.patchChannels();
-  }
-
-  handleHide(channel) {
-    let list = this.settings.get("idlist", [""])
-    let details = this.settings.get("details", [])
-
-    if (list.length === 1 && list[0] === "") {
-      list[0] = channel.id
-    } else {
-      list.push(channel.id)
-    }
-
-    if (!details.some(e => e.id === channel.id)) {
-      details.push(channel)
-    }
-
-    this.settings.set("idlist", list)
-    this.settings.set("details", details)
+    this.patchContextMenu();
   }
 
   async patchContextMenu() {
-    // Most of the code yoinked from here https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
+    // TODO: Update component immediately after hiding so user doesn't have to click somewhere
+    // Most of this code is yoinked from here https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
     const Menu = await getModule([ 'MenuItem' ]);
 
     inject('hidden-context-patch', Menu, 'default', (args) => {
@@ -58,14 +41,21 @@ module.exports = class HideChannels extends Plugin {
       if (!hasHideChannelItem) {
         let channel;
 
+        // ? Maybe this can be switched to use react instead of dom
         if (document.querySelector('#channel-context')) {
           const instance = getOwnerInstance(document.querySelector('#channel-context'));
+          // ? Maybe this can shortened
           channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child?.child?.child?.return?.memoizedProps?.children?.props?.channel;
         }
 
         if (!channel) {
           return args;
         }
+
+        // Category
+        if (!(channel.type === 2 || channel.type === 0)) {
+          return args
+        };
 
         const HideChannelItem = React.createElement(Menu.MenuItem, {
           id: 'hide-channel',
@@ -93,24 +83,38 @@ module.exports = class HideChannels extends Plugin {
     Menu.default.displayName = 'Menu';
   }
 
-  getChannels() {
-      // * Further testing may be needed for these
-      const textPromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === "ConnectedTextChannel");
-  
-      const voicePromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === "ConnectedVoiceChannel");
+  handleHide(channel) {
+    let list = this.settings.get("idlist", [])
+    let details = this.settings.get("details", [])
 
-      // For context menu
-      const itemPromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === "ChannelListTextChannelContextMenu");
+    if (!list.includes(channel.id)) {
+      list.push(channel.id)
+    }
+
+    if (!details.some(e => e.id === channel.id)) {
+      details.push(channel)
+    }
+
+    // TODO: Don't update if nothing changed
+    this.settings.set("idlist", list)
+    this.settings.set("details", details)
+  }
+
+  getChannelModules() {
+      // * Further testing may be needed for these
+      const textPromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[0]);
   
-      return Promise.all([textPromise, voicePromise, itemPromise]);
+      const voicePromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[1]);
+  
+      return Promise.all([textPromise, voicePromise]);
   }
 
   async patchChannels() {
     let channels;
 
     try {
-      // TODO: Add null check
-      channels = await this.getChannels()
+      // TODO: Add null check and other tests
+      channels = await this.getChannelModules()
     } catch (error) {
       this.error("Could not get channel modules! Please restart plugin", error)
       this.moduleError = true
@@ -120,13 +124,15 @@ module.exports = class HideChannels extends Plugin {
 
     this.patches.forEach((name, index) => {
       inject(name, channels[index], "default", (_, res) => {
-        const idlist = this.settings.get("idlist", [""]);
+        const idlist = this.settings.get("idlist", []);
 
-        if (idlist && Array.isArray(idlist) && idlist.includes(res.props.channel.id)) {
+        if (idlist.includes(res.props.channel.id)) {
           res = React.createElement("p", { style: { display: "none" } });
         }
+
         return res;
       });
+
       channels[index].default.displayName = this.moduleNames[index]
     });
   }
@@ -134,7 +140,6 @@ module.exports = class HideChannels extends Plugin {
   pluginWillUnload() {
     this.setApi.unregisterSettings("hidechannels");
 
-    if (this.moduleError) return;
     this.patches.forEach((name) => uninject(name));
     uninject("hidden-context-patch")
   }
