@@ -1,0 +1,8 @@
+{
+  "name": "Hide Channels",
+  "version": "1.0.0",
+  "description": "Hide channels using the context menu",
+  "permissions": "",
+  "author": "RazerMoon",
+  "license": "MIT"
+}
