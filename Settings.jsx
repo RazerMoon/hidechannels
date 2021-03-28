@@ -2,14 +2,14 @@ const { React } = require("powercord/webpack");
 const { TextInput, SwitchItem } = require("powercord/components/settings");
 
 module.exports = ({ getSetting, updateSetting, toggleSetting }) => {
-  const validlist = /^\d+(,\d+)*$/
-
   const [error, setError] = React.useState(false)
 
   const onChange = (val) => {
+    // Removes whitespace
     const sanitized = val.replace(/\s/g, "")
 
-    if (sanitized !== "" && !validlist.test(sanitized)) {
+    // Tests if string only consists of digits seperate by commas
+    if (sanitized !== "" && !(/^\d+(,\d+)*$/).test(sanitized)) {
       setError(true)
       return;
     }
