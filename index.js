@@ -6,12 +6,10 @@ const { findInReactTree, getOwnerInstance } = require("powercord/util");
 const Settings = require("./Settings.jsx");
 
 module.exports = class HideChannels extends Plugin {
-  setApi = powercord.api.settings;
-  patches = ["hidechannels-textchannel-patch", "hidechannels-voicechannel-patch"];
-  moduleNames = ["ConnectedTextChannel", "ConnectedVoiceChannel"]
-  moduleError;
-
   startPlugin() {
+    this.setApi = powercord.api.settings
+    this.patches = ["hidechannels-textchannel-patch", "hidechannels-voicechannel-patch"]
+    this.moduleNames = ["ConnectedTextChannel", "ConnectedVoiceChannel"]
     this.moduleError = false;
 
     this.setApi.registerSettings("hidechannels", {
