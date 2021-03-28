@@ -24,11 +24,22 @@ module.exports = class HideChannels extends Plugin {
     this.patchChannels();
   }
 
-  handleHide({id}) {
+  handleHide(channel) {
     let list = this.settings.get("idlist", [""])
-    list.push(id)
+    let details = this.settings.get("details", [])
+
+    if (list.length === 1 && list[0] === "") {
+      list[0] = channel.id
+    } else {
+      list.push(channel.id)
+    }
+
+    if (!details.some(e => e.id === channel.id)) {
+      details.push(channel)
+    }
 
     this.settings.set("idlist", list)
+    this.settings.set("details", details)
   }
 
   async patchContextMenu() {
