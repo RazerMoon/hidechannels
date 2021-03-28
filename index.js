@@ -53,7 +53,7 @@ module.exports = class HideChannels extends Plugin {
         // Category
         if (!(channel.type === 2 || channel.type === 0)) {
           return args
-        };
+        }
 
         const HideChannelItem = React.createElement(Menu.MenuItem, {
           id: "hide-channel",
