@@ -1,12 +1,15 @@
-const { React } = require("powercord/webpack");
-const { ButtonItem } = require("powercord/components/settings");
+const { React } = require('powercord/webpack');
+const { ButtonItem } = require('powercord/components/settings');
 
+// eslint-disable-next-line no-warning-comments
 // TODO: Make the channel items more distinct/seperate from the actual settings
 module.exports = ({ getSetting, updateSetting, settings }) => {
   const Note = ({ id, guild_id, type }) => (
-    <div style={{ display: "flex", flexFlow: "column", marginTop: "8px" }}>
+    <div style={{ display: 'flex',
+      flexFlow: 'column',
+      marginTop: '8px' }}>
       <span>
-        <b>Type:</b> {type} ({type === 0 ? "Text" : "Voice"})
+        <b>Type:</b> {type} ({type === 0 ? 'Text' : 'Voice'})
       </span>
       <span>
         <b>ID:</b> {id}
@@ -18,26 +21,28 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
   );
 
   const removeAll = () => {
-    updateSetting("idlist", []);
-    updateSetting("details", []);
+    updateSetting('idlist', []);
+    updateSetting('details', []);
   };
 
   const removeID = (id) => {
-    const list = getSetting("idlist", []);
-    const details = getSetting("details", []);
+    const list = getSetting('idlist', []);
+    const details = getSetting('details', []);
 
-    if (!list || !details || list.length === 0 || details.length === 0) return;
+    if (!list || !details || list.length === 0 || details.length === 0) {
+      return;
+    }
 
     if (list.includes(id)) {
       updateSetting(
-        "idlist",
+        'idlist',
         list.filter((item) => item !== id)
       );
     }
 
     if (details.some((item) => item.id === id)) {
       updateSetting(
-        "details",
+        'details',
         details.filter((item) => item.id !== id)
       );
     }
@@ -59,7 +64,7 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
       >
         Reset
       </ButtonItem>
-      {getSetting("details", []).map(({ name, guild_id, id, type }) => (
+      {getSetting('details', []).map(({ name, guild_id, id, type }) => (
         <ButtonItem
           note={<Note guild_id={guild_id} id={id} type={type} />}
           button="Remove"
