@@ -1,7 +1,7 @@
 const { Plugin } = require("powercord/entities");
 const { React, getModule } = require("powercord/webpack");
 const { inject, uninject } = require("powercord/injector");
-const { findInReactTree, getOwnerInstance } = require('powercord/util');
+const { findInReactTree, getOwnerInstance } = require("powercord/util");
 
 const Settings = require("./Settings.jsx");
 
@@ -26,24 +26,24 @@ module.exports = class HideChannels extends Plugin {
 
   async patchContextMenu() {
     // TODO: Update component immediately after hiding so user doesn't have to click somewhere
-    // Most of this code is yoinked from here https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
-    const Menu = await getModule([ 'MenuItem' ]);
+    // Most of this code is yoinked from here: https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
+    const Menu = await getModule(["MenuItem"]);
 
-    inject('hidden-context-patch', Menu, 'default', (args) => {
+    inject("hidechannels-context-patch", Menu, "default", (args) => {
       const [ { navId, children } ] = args;
 
       if (navId !== "channel-context") {
         return args;
       }
 
-      const hasHideChannelItem = findInReactTree(children, child => child.props && child.props.id === 'hide-channel');
+      const hasHideChannelItem = findInReactTree(children, child => child.props && child.props.id === "hide-channel");
 
       if (!hasHideChannelItem) {
         let channel;
 
         // ? Maybe this can be switched to use react instead of dom
-        if (document.querySelector('#channel-context')) {
-          const instance = getOwnerInstance(document.querySelector('#channel-context'));
+        if (document.querySelector("#channel-context")) {
+          const instance = getOwnerInstance(document.querySelector("#channel-context"));
           // ? Maybe this can shortened
           channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child?.child?.child?.return?.memoizedProps?.children?.props?.channel;
         }
@@ -58,12 +58,12 @@ module.exports = class HideChannels extends Plugin {
         };
 
         const HideChannelItem = React.createElement(Menu.MenuItem, {
-          id: 'hide-channel',
-          label: 'Hide Channel',
+          id: "hide-channel",
+          label: "Hide Channel",
           action: () => this.handleHide(channel)
         });
   
-        const devmodeItem = findInReactTree(children, child => child.props && child.props.id === 'devmode-copy-id');
+        const devmodeItem = findInReactTree(children, child => child.props && child.props.id === "devmode-copy-id");
         const developerGroup = children.find(child => child.props && child.props.children === devmodeItem);
   
         if (developerGroup) {
@@ -80,7 +80,7 @@ module.exports = class HideChannels extends Plugin {
       return args
     }, true)
 
-    Menu.default.displayName = 'Menu';
+    Menu.default.displayName = "Menu";
   }
 
   handleHide(channel) {
@@ -141,6 +141,6 @@ module.exports = class HideChannels extends Plugin {
     this.setApi.unregisterSettings("hidechannels");
 
     this.patches.forEach((name) => uninject(name));
-    uninject("hidden-context-patch")
+    uninject("hidechannels-context-patch")
   }
 };
