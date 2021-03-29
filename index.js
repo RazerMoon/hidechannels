@@ -10,6 +10,7 @@ module.exports = class HideChannels extends Plugin {
     this.setApi = powercord.api.settings;
     this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch' ];
     this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu' ];
+    this.getModules = () => Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
     this.modules = [];
 
     this.setApi.registerSettings('hidechannels', {
@@ -24,19 +25,19 @@ module.exports = class HideChannels extends Plugin {
       // eslint-disable-next-line no-warning-comments
       // TODO: Add null check
 
+      if (this.modules.some(mod => mod === null)) {
+        this.error('Could not find all of the modules! Cancelling...');
+        return;
+      }
+
       this.patchChannels();
       this.patchContextMenu();
     }).catch((err) => {
-      this.error('Something went wrong while fetching modules!', err);
+      this.error('Something went wrong while fetching modules! Cancelling...', err);
     });
   }
 
-  getModules () {
-    // * Further testing may be needed for these
-    return Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
-  }
-
-  async patchContextMenu () {
+  patchContextMenu () {
     // eslint-disable-next-line no-warning-comments
     // TODO: Update component immediately after hiding so user doesn't have to click somewhere
     // Most of this code is yoinked from here: https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
@@ -123,7 +124,7 @@ module.exports = class HideChannels extends Plugin {
     this.settings.set('details', details);
   }
 
-  async patchChannels () {
+  patchChannels () {
     this.patches.forEach((name, index) => {
       if (index > 1) {
         return;
