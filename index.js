@@ -8,9 +8,9 @@ const Settings = require('./Settings.jsx');
 module.exports = class HideChannels extends Plugin {
   startPlugin () {
     this.setApi = powercord.api.settings;
-    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch' ];
-    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel' ];
-    this.moduleError = false;
+    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch' ];
+    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu' ];
+    this.modules = [];
 
     this.setApi.registerSettings('hidechannels', {
       category: this.entityID,
@@ -18,17 +18,31 @@ module.exports = class HideChannels extends Plugin {
       render: Settings
     });
 
-    this.patchChannels();
-    this.patchContextMenu();
+    this.getModules().then((val) => {
+      this.modules = val;
+
+      // eslint-disable-next-line no-warning-comments
+      // TODO: Add null check
+
+      this.patchChannels();
+      this.patchContextMenu();
+    }).catch((err) => {
+      this.error('Something went wrong while fetching modules!', err);
+    });
+  }
+
+  getModules () {
+    // * Further testing may be needed for these
+    return Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
   }
 
   async patchContextMenu () {
     // eslint-disable-next-line no-warning-comments
     // TODO: Update component immediately after hiding so user doesn't have to click somewhere
     // Most of this code is yoinked from here: https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
-    const Menu = await getModule([ 'MenuItem' ]);
+    const Menu = this.modules[2];
 
-    inject('hidechannels-context-patch', Menu, 'default', (args) => {
+    inject(this.patches[2], Menu, 'default', (args) => {
       const [ { navId, children } ] = args;
 
       if (navId !== 'channel-context') {
@@ -109,33 +123,13 @@ module.exports = class HideChannels extends Plugin {
     this.settings.set('details', details);
   }
 
-  getChannelModules () {
-    // * Further testing may be needed for these
-    const textPromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[0]);
-
-    const voicePromise = getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[1]);
-
-    return Promise.all([ textPromise, voicePromise ]);
-  }
-
   async patchChannels () {
-    let channels;
-
-    try {
-      // eslint-disable-next-line no-warning-comments
-      // TODO: Add null check and other tests
-      channels = await this.getChannelModules();
-    } catch (error) {
-      this.error('Could not get channel modules! Please restart plugin', error);
-      this.moduleError = true;
-    }
-
-    if (this.moduleError) {
-      return;
-    }
-
     this.patches.forEach((name, index) => {
-      inject(name, channels[index], 'default', (_, res) => {
+      if (index > 1) {
+        return;
+      }
+
+      inject(name, this.modules[index], 'default', (_, res) => {
         const idlist = this.settings.get('idlist', []);
 
         if (idlist.includes(res.props.channel.id)) {
@@ -145,7 +139,7 @@ module.exports = class HideChannels extends Plugin {
         return res;
       });
 
-      channels[index].default.displayName = this.moduleNames[index];
+      this.modules[index].default.displayName = this.moduleNames[index];
     });
   }
 
@@ -153,6 +147,5 @@ module.exports = class HideChannels extends Plugin {
     this.setApi.unregisterSettings('hidechannels');
 
     this.patches.forEach((name) => uninject(name));
-    uninject('hidechannels-context-patch');
   }
 };
