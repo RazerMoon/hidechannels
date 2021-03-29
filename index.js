@@ -39,12 +39,18 @@ module.exports = class HideChannels extends Plugin {
 
       if (!hasHideChannelItem) {
         let channel;
+        let mute;
 
         // ? Maybe this can be switched to use react instead of dom
         if (document.querySelector('#channel-context')) {
           const instance = getOwnerInstance(document.querySelector('#channel-context'));
-          // ? Maybe this can shortened
-          channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child?.child?.child?.return?.memoizedProps?.children?.props?.channel;
+          // ? Maybe these can shortened
+          channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.return?.memoizedProps.children.props.channel;
+          const buttons = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.child.child.child.child.memoizedProps.children;
+
+          // eslint-disable-next-line no-warning-comments
+          // TODO: Find out how efficient this is
+          mute = findInReactTree(buttons, child => child.props && child.props.label === 'Until I turn it back on')?.props.action;
         }
 
         if (!channel) {
@@ -59,7 +65,10 @@ module.exports = class HideChannels extends Plugin {
         const HideChannelItem = React.createElement(Menu.MenuItem, {
           id: 'hide-channel',
           label: 'Hide Channel',
-          action: () => this.handleHide(channel)
+          action: () => {
+            this.handleHide(channel);
+            mute?.();
+          }
         });
 
         const devmodeItem = findInReactTree(children, child => child.props && child.props.id === 'devmode-copy-id');
