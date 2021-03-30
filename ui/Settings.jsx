@@ -1,6 +1,6 @@
 const { React } = require('powercord/webpack');
 const { ButtonItem } = require('powercord/components/settings');
-const showChannel = require('./utils/showChannel');
+const showChannel = require('../utils/showChannel');
 
 // eslint-disable-next-line no-warning-comments
 // TODO: Make the channel items more distinct/seperate from the actual settings

@@ -2,7 +2,7 @@ const { inject } = require('powercord/injector');
 const { getModule } = require('powercord/webpack');
 const { findInReactTree } = require('powercord/util');
 
-const RemoveHiddenChannelsButton = require('../RemoveHiddenChannelsButton.jsx');
+const RemoveHiddenChannelsButton = require('../ui/RemoveHiddenChannelsButton.jsx');
 
 async function patchGuildCM (patchName, moduleName, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
   const guildCM = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === moduleName);

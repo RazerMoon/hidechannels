@@ -2,7 +2,7 @@ const { Plugin } = require('powercord/entities');
 const { getModule } = require('powercord/webpack');
 const { uninject } = require('powercord/injector');
 
-const Settings = require('./Settings.jsx');
+const Settings = require('./ui/Settings.jsx');
 
 const hideChannel = require('./utils/hideChannel.js');
 const patchGuildCM = require('./patches/patchGuildCM.js');

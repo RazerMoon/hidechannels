@@ -1,6 +1,6 @@
 const { React } = require('powercord/webpack');
 const { ContextMenu } = require('powercord/components');
-const showChannel = require('./utils/showChannel');
+const showChannel = require('../utils/showChannel');
 
 class RemoveHiddenChannelsButton extends React.PureComponent {
   static render (props) {
