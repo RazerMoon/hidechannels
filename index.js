@@ -31,7 +31,7 @@ module.exports = class HideChannels extends Plugin {
         return;
       }
 
-      patchChannels(this.moduleNames.slice(0, 2), this.patches.slice(0, 2), this.settings);
+      patchChannels(this.patches.slice(0, 2), this.moduleNames.slice(0, 2), this.settings);
       patchChannelCMs(this.patches[2], this.moduleNames[2]);
       patchGuildCM(this.patches[3], this.moduleNames[3], this.settings);
     }).catch((err) => {

@@ -1,7 +1,7 @@
 const { inject } = require('powercord/injector');
 const { React, getModule } = require('powercord/webpack');
 
-async function patchChannels (moduleNames, patches, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
+async function patchChannels (patches, moduleNames, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
   const chanmods = await Promise.all(moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
 
   patches.slice(0, 2).forEach((name, index) => {
