@@ -5,13 +5,14 @@ const { findInReactTree, getOwnerInstance } = require('powercord/util');
 
 const Settings = require('./Settings.jsx');
 
+const RemoveHiddenChannelsButton = require('./RemoveHiddenChannelsButton.jsx');
+
 module.exports = class HideChannels extends Plugin {
   startPlugin () {
     this.setApi = powercord.api.settings;
-    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch' ];
-    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu' ];
+    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch', 'hidechannels-guildcm-patch' ];
+    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu', 'GuildContextMenu' ];
     this.getModules = () => Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
-    this.modules = [];
 
     this.setApi.registerSettings('hidechannels', {
       category: this.entityID,
@@ -20,22 +21,45 @@ module.exports = class HideChannels extends Plugin {
     });
 
     this.getModules().then((val) => {
-      this.modules = val;
+      const modules = val;
 
-      if (this.modules.some(mod => mod === null)) {
+      if (modules.some(mod => mod === null)) {
         this.error('Could not find all of the modules! Cancelling...');
         return;
       }
 
       this.patchChannels();
       this.patchMenus();
+      this.patchGuildCM();
     }).catch((err) => {
       this.error('Something went wrong while fetching modules! Cancelling...', err);
     });
   }
 
-  channelCM (args) {
-    const Menu = this.modules[2];
+  async patchGuildCM () {
+    const guildCM = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[3]);
+
+    inject(this.patches[3], guildCM, 'default', (_, res) => {
+      const hasShowChannelsButton = findInReactTree(res.props.children, child => child.props && child.props.id === 'remove-hidden-channels');
+
+      if (!hasShowChannelsButton) {
+        const mutedchannels = findInReactTree(res.props.children, child => child.props?.children && findInReactTree(child.props.children, child => child.props && child.props.id === 'hide-muted-channels'));
+
+        if (!mutedchannels) {
+          return res;
+        }
+
+        const HideChannelItem = RemoveHiddenChannelsButton.render();
+
+        mutedchannels.props.children.push(HideChannelItem);
+      }
+
+      return res;
+    });
+  }
+
+  async channelCMPatch (args) {
+    const Menu = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === 'Menu');
 
     const hasHideChannelItem = findInReactTree(args[0].children, child => child.props && child.props.id === 'hide-channel');
 
@@ -90,29 +114,28 @@ module.exports = class HideChannels extends Plugin {
     return args;
   }
 
-  patchMenus () {
+  async patchMenus () {
     // eslint-disable-next-line no-warning-comments
     // TODO: Update component immediately after hiding so user doesn't have to click somewhere
     // ? Refactor into seperate patches
     // Most of this code is yoinked from here: https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
     // Useful patch examples https://github.com/userXinos/image-tools/blob/main/index.js
 
-    inject(this.patches[2], this.modules[2], 'default', (args) => {
+    const Menu = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[2]);
+
+
+    inject(this.patches[2], Menu, 'default', (args) => {
       const [ { navId } ] = args;
 
-      if (navId === 'guild-header-popout') {
-        // console.dir(args);
-        return args;
-      }
-
       if (navId === 'channel-context') {
-        args = this.channelCM(args);
+        args = this.channelCMPatch(args);
+        console.dir(args);
       }
 
       return args;
     }, true);
 
-    this.modules[2].default.displayName = 'Menu';
+    Menu.default.displayName = 'Menu';
   }
 
   handleHide (channel) {
@@ -133,13 +156,15 @@ module.exports = class HideChannels extends Plugin {
     this.settings.set('details', details);
   }
 
-  patchChannels () {
+  async patchChannels () {
+    const chanmods = await Promise.all(this.moduleNames.slice(0, 2).map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
+
     this.patches.forEach((name, index) => {
       if (index > 1) {
         return;
       }
 
-      inject(name, this.modules[index], 'default', (_, res) => {
+      inject(name, chanmods[index], 'default', (_, res) => {
         const idlist = this.settings.get('idlist', []);
 
         if (idlist.includes(res.props.channel.id)) {
@@ -149,7 +174,7 @@ module.exports = class HideChannels extends Plugin {
         return res;
       });
 
-      this.modules[index].default.displayName = this.moduleNames[index];
+      chanmods[index].default.displayName = this.moduleNames[index];
     });
   }
 
