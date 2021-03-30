@@ -29,7 +29,7 @@ module.exports = class HideChannels extends Plugin {
       }
 
       this.patchChannels();
-      this.patchMenus();
+      this.patchChannelMenus();
       this.patchGuildCM();
     }).catch((err) => {
       this.error('Something went wrong while fetching modules! Cancelling...', err);
@@ -58,63 +58,7 @@ module.exports = class HideChannels extends Plugin {
     });
   }
 
-  async channelCMPatch (args) {
-    const Menu = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === 'Menu');
-
-    const hasHideChannelItem = findInReactTree(args[0].children, child => child.props && child.props.id === 'hide-channel');
-
-    if (!hasHideChannelItem) {
-      let channel;
-      let mute;
-
-      // ? Maybe this can be switched to use react instead of dom
-      if (document.querySelector('#channel-context')) {
-        const instance = getOwnerInstance(document.querySelector('#channel-context'));
-        // ? Maybe these can shortened
-        channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.return?.memoizedProps.children.props.channel;
-        const buttons = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.child.child.child.child.memoizedProps.children;
-
-        // eslint-disable-next-line no-warning-comments
-        // TODO: Find out how efficient this is
-        mute = findInReactTree(buttons, child => child.props && child.props.label === 'Until I turn it back on')?.props.action;
-      }
-
-      if (!channel) {
-        return args;
-      }
-
-      // Category
-      if (!(channel.type === 2 || channel.type === 0)) {
-        return args;
-      }
-
-      const HideChannelItem = React.createElement(Menu.MenuItem, {
-        id: 'hide-channel',
-        label: 'Hide Channel',
-        action: () => {
-          this.handleHide(channel);
-          mute?.();
-        }
-      });
-
-      const devmodeItem = findInReactTree(args[0].children, child => child.props && child.props.id === 'devmode-copy-id');
-      const developerGroup = args[0].children.find(child => child.props && child.props.children === devmodeItem);
-
-      if (developerGroup) {
-        if (!Array.isArray(developerGroup.props.children)) {
-          developerGroup.props.children = [ developerGroup.props.children ];
-        }
-
-        developerGroup.props.children.push(HideChannelItem);
-      } else {
-        args[0].children.push([ React.createElement(Menu.MenuSeparator), React.createElement(Menu.MenuGroup, {}, HideChannelItem) ]);
-      }
-    }
-
-    return args;
-  }
-
-  async patchMenus () {
+  async patchChannelMenus () {
     // eslint-disable-next-line no-warning-comments
     // TODO: Update component immediately after hiding so user doesn't have to click somewhere
     // ? Refactor into seperate patches
@@ -123,14 +67,63 @@ module.exports = class HideChannels extends Plugin {
 
     const Menu = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === this.moduleNames[2]);
 
-
-    inject(this.patches[2], Menu, 'default', (args) => {
+    inject(this.patches[2], Menu, 'default', (args, res) => {
       const [ { navId } ] = args;
 
-      if (navId === 'channel-context') {
-        args = this.channelCMPatch(args);
-        console.dir(args);
+      if (navId !== 'channel-context') {
+        return res;
       }
+
+      const hasHideChannelItem = findInReactTree(args[0].children, child => child.props && child.props.id === 'hide-channel');
+
+      if (!hasHideChannelItem) {
+        let channel;
+        let mute;
+
+        // ? Maybe this can be switched to use react instead of dom
+        if (document.querySelector('#channel-context')) {
+          const instance = getOwnerInstance(document.querySelector('#channel-context'));
+          // ? Maybe these can shortened
+          channel = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.return?.memoizedProps.children.props.channel;
+          const buttons = (instance?._reactInternals || instance?._reactInternalFiber)?.child.child.child.child.child.child.child.memoizedProps.children;
+
+          // eslint-disable-next-line no-warning-comments
+          // TODO: Find out how efficient this is
+          mute = findInReactTree(buttons, child => child.props && child.props.label === 'Until I turn it back on')?.props.action;
+        }
+
+        if (!channel) {
+          return args;
+        }
+
+        // Category
+        if (!(channel.type === 2 || channel.type === 0)) {
+          return args;
+        }
+
+        const HideChannelItem = React.createElement(Menu.MenuItem, {
+          id: 'hide-channel',
+          label: 'Hide Channel',
+          action: () => {
+            this.handleHide(channel);
+            mute?.();
+          }
+        });
+
+        const devmodeItem = findInReactTree(args[0].children, child => child.props && child.props.id === 'devmode-copy-id');
+        const developerGroup = args[0].children.find(child => child.props && child.props.children === devmodeItem);
+
+        if (developerGroup) {
+          if (!Array.isArray(developerGroup.props.children)) {
+            developerGroup.props.children = [ developerGroup.props.children ];
+          }
+
+          developerGroup.props.children.push(HideChannelItem);
+        } else {
+          args[0].children.push([ React.createElement(Menu.MenuSeparator), React.createElement(Menu.MenuGroup, {}, HideChannelItem) ]);
+        }
+      }
+
 
       return args;
     }, true);
