@@ -1,50 +1,38 @@
 const { React } = require('powercord/webpack');
 const { ContextMenu } = require('powercord/components');
+const showChannel = require('./utils/showChannel');
 
 class RemoveHiddenChannelsButton extends React.PureComponent {
-  static render () {
-    const itb = new RemoveHiddenChannelsButton();
+  static render (props) {
+    const itb = new RemoveHiddenChannelsButton(props);
     return itb.renderContextMenu();
   }
 
   get items () {
-    // server ids
-    return [ '123', '456', '789' ];
+    return this.props.settings.get('details').filter((item) => item.guild_id === this.props.guild_id);
   }
 
   renderContextMenu () {
     const [ res ] = ContextMenu.renderRawItems([ {
       type: 'submenu',
       id: 'remove-hidden-channels',
-      name: 'context-name',
+      name: 'Show Hidden Channel',
       items: this.getSubMenuItems(),
       getItems () {
         return this.items;
       }
     } ]);
 
-    res.props.action = () => console.log('bruh');
     return res;
   }
 
   getSubMenuItems () {
-    const { items } = this;
-
-    if (items.length > 1) {
-      return items.map((e) => ({
-        type: 'button',
-        id: `sub-${e}`,
-        name: e,
-        onClick: () => console.log('bruh')
-      }));
-    }
-    return this.getBaseMenu();
-  }
-
-  getBaseMenu () {
-    return [ { type: 'button',
-      id: 'open' }, { type: 'button',
-      id: 'close' } ];
+    return this.items.map(({ id, name }) => ({
+      type: 'button',
+      id: `sub-${id}`,
+      name,
+      onClick: () => showChannel(id, this.settings)
+    }));
   }
 }
 

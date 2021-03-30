@@ -1,5 +1,6 @@
 const { React } = require('powercord/webpack');
 const { ButtonItem } = require('powercord/components/settings');
+const showChannel = require('./utils/showChannel');
 
 // eslint-disable-next-line no-warning-comments
 // TODO: Make the channel items more distinct/seperate from the actual settings
@@ -25,29 +26,6 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
     updateSetting('details', []);
   };
 
-  const removeID = (id) => {
-    const list = getSetting('idlist', []);
-    const details = getSetting('details', []);
-
-    if (!list || !details || list.length === 0 || details.length === 0) {
-      return;
-    }
-
-    if (list.includes(id)) {
-      updateSetting(
-        'idlist',
-        list.filter((item) => item !== id)
-      );
-    }
-
-    if (details.some((item) => item.id === id)) {
-      updateSetting(
-        'details',
-        details.filter((item) => item.id !== id)
-      );
-    }
-  };
-
   return (
     <div>
       <ButtonItem
@@ -67,8 +45,9 @@ module.exports = ({ getSetting, updateSetting, settings }) => {
       {getSetting('details', []).map(({ name, guild_id, id, type }) => (
         <ButtonItem
           note={<Note guild_id={guild_id} id={id} type={type} />}
-          button="Remove"
-          onClick={() => removeID(id)}
+          button="Show"
+          onClick={() => showChannel(id, { get: getSetting,
+            set: updateSetting })}
         >
           {name}
         </ButtonItem>
