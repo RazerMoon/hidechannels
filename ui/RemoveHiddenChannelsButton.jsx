@@ -2,7 +2,8 @@ const { React } = require('powercord/webpack');
 const { ContextMenu } = require('powercord/components');
 const showChannel = require('../utils/showChannel');
 
-class RemoveHiddenChannelsButton extends React.PureComponent {
+// Stripped down version of this: https://github.com/userXinos/image-tools/blob/main/components/Button.jsx
+module.exports = class RemoveHiddenChannelsButton extends React.PureComponent {
   static render (props) {
     const itb = new RemoveHiddenChannelsButton(props);
     return itb.renderContextMenu();
@@ -34,6 +35,4 @@ class RemoveHiddenChannelsButton extends React.PureComponent {
       onClick: () => showChannel(id, this.settings)
     }));
   }
-}
-
-module.exports = RemoveHiddenChannelsButton;
+};

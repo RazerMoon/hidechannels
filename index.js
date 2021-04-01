@@ -9,6 +9,12 @@ const patchGuildCM = require('./patches/patchGuildCM.js');
 const patchChannels = require('./patches/patchChannels.js');
 const patchChannelCMs = require('./patches/patchChannelCMs.js');
 
+/**
+ * Hide text and voice channels using the context menu
+ * @link https://github.com/RazerMoon/hidechannels
+ * @license MIT
+ * @extends Plugin
+ */
 module.exports = class HideChannels extends Plugin {
   startPlugin () {
     this.setApi = powercord.api.settings;

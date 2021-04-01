@@ -1,4 +1,26 @@
-function showChannel (id, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
+/**
+ * Returns the value of a setting
+ * @callback getSetting
+ * @param {String} name Name of the setting
+ * @param {*} defaultValue Default value for setting
+ */
+
+/**
+ * Sets the value of a setting
+ * @callback setSetting
+ * @param {String} name Name of the setting
+ * @param {*} newValue New value to set
+ */
+
+/**
+ * Removes the channel from the list of hidden channels
+ * @param {string} id ID of the channel
+ * @param {Object} settings Settings object for plugin with get and set methods
+ * @param {getSetting} settings.get
+ * @param {setSetting} settings.set
+ * @returns
+ */
+module.exports = function showChannel (id, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
   const list = settings.get('idlist', []);
   const details = settings.get('details', []);
 
@@ -19,6 +41,4 @@ function showChannel (id, settings = powercord.pluginManager.plugins.get('hidech
       details.filter((item) => item.id !== id)
     );
   }
-}
-
-module.exports = showChannel;
+};

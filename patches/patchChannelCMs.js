@@ -4,13 +4,18 @@ const { findInReactTree, getOwnerInstance } = require('powercord/util');
 
 const hideChannel = require('../utils/hideChannel.js');
 
-async function patchChannelCMs (patchName, moduleName) {
+/**
+ * Patches the channel context menus
+ * @param {String} patchName Name of the patch
+ * @param {String} moduleName Name of the menu module
+ * @returns {Promise<void>}
+ */
+module.exports = async function patchChannelCMs (patchName, moduleName) {
   // eslint-disable-next-line no-warning-comments
   // TODO: Update component immediately after hiding so user doesn't have to click somewhere
   // eslint-disable-next-line no-warning-comments
   // TODO: Investigate why patching text channelCM is brokey
   // Most of this code is yoinked from here: https://github.com/21Joakim/copy-avatar-url/blob/master/index.js
-  // Useful patch examples https://github.com/userXinos/image-tools/blob/main/index.js
 
   const Menu = await getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === moduleName);
 
@@ -76,6 +81,4 @@ async function patchChannelCMs (patchName, moduleName) {
   }, true);
 
   Menu.default.displayName = 'Menu';
-}
-
-module.exports = patchChannelCMs;
+};
