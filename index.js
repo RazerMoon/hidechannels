@@ -18,7 +18,7 @@ const patchChannelCMs = require('./patches/patchChannelCMs.js');
 module.exports = class HideChannels extends Plugin {
   startPlugin () {
     this.setApi = powercord.api.settings;
-    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch', 'hidechannels-guildcm-patch' ];
+    this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch', 'hidechannels-guildcm-patch', 'hidechannels-navchannels-patch' ];
     this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu', 'GuildContextMenu' ];
     this.getModules = () => Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
     this.hideChannel = (channel) => hideChannel(channel, this.settings);
@@ -49,6 +49,5 @@ module.exports = class HideChannels extends Plugin {
     this.setApi.unregisterSettings('hidechannels');
 
     this.patches.forEach((name) => uninject(name));
-    uninject('awdawd');
   }
 };
