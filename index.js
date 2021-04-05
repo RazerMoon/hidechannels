@@ -49,5 +49,6 @@ module.exports = class HideChannels extends Plugin {
     this.setApi.unregisterSettings('hidechannels');
 
     this.patches.forEach((name) => uninject(name));
+    uninject('awdawd');
   }
 };
