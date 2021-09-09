@@ -21,8 +21,8 @@
  * @returns
  */
 module.exports = function showChannel (id, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
-  const list = settings.get('idlist', []);
-  const details = settings.get('details', []);
+  const list = settings.get('idlist', []).slice();
+  const details = settings.get('details', []).slice();
 
   if (!list || !details || list.length === 0 || details.length === 0) {
     return;
