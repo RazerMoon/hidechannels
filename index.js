@@ -5,7 +5,7 @@ const { uninject } = require('powercord/injector');
 const Settings = require('./ui/Settings.jsx');
 
 const hideChannel = require('./utils/hideChannel.js');
-const patchGuildCM = require('./patches/patchGuildCM.js');
+// const patchGuildCM = require('./patches/patchGuildCM.js'); broke
 const patchChannels = require('./patches/patchChannels.js');
 const patchChannelCMs = require('./patches/patchChannelCMs.js');
 
@@ -19,7 +19,7 @@ module.exports = class HideChannels extends Plugin {
   startPlugin () {
     this.setApi = powercord.api.settings;
     this.patches = [ 'hidechannels-textchannel-patch', 'hidechannels-voicechannel-patch', 'hidechannels-context-patch', 'hidechannels-guildcm-patch', 'hidechannels-navchannels-patch' ];
-    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu', 'GuildContextMenu' ];
+    this.moduleNames = [ 'ConnectedTextChannel', 'ConnectedVoiceChannel', 'Menu' ]; // 'GuildContextMenu' removed cause broke
     this.getModules = () => Promise.all(this.moduleNames.map((name) => getModule((m) => (m.__powercordOriginal_default || m.default)?.displayName === name)));
     this.hideChannel = (channel) => hideChannel(channel, this.settings);
 
@@ -39,7 +39,7 @@ module.exports = class HideChannels extends Plugin {
 
       patchChannels(this.patches.slice(0, 2), this.moduleNames.slice(0, 2), this.settings);
       patchChannelCMs(this.patches[2], this.moduleNames[2]);
-      patchGuildCM(this.patches[3], this.moduleNames[3], this.settings);
+      // patchGuildCM(this.patches[3], this.moduleNames[3], this.settings); It broke
     }).catch((err) => {
       this.error('Something went wrong while fetching modules! Cancelling...', err);
     });
