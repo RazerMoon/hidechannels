@@ -23,12 +23,15 @@
 module.exports = function removeChannel (channel, settings = powercord.pluginManager.plugins.get('hidechannels').settings) {
   const list = settings.get('idlist', []);
   const details = settings.get('details', []);
-
+  
   if (!list.includes(channel.id)) {
     settings.set('idlist', [...list, channel.id]);
   }
-
+  
   if (!details.some(item => item.id === channel.id)) {
-    settings.set('details', [...details, channel]);
+    // Need to leave out `permissionOverwrites` or powercord crashes, might have something to do with the BigInt stored there.
+    const { permissionOverwrites, ...newChannel} = channel
+    const newDetails = [...details, { ...newChannel }];
+    settings.set('details', newDetails);
   }
 };
