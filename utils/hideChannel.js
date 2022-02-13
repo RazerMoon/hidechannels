@@ -25,10 +25,10 @@ module.exports = function removeChannel (channel, settings = powercord.pluginMan
   const details = settings.get('details', []);
 
   if (!list.includes(channel.id)) {
-    list.push(channel.id);
+    settings.set('idlist', [...list, channel.id]);
   }
 
   if (!details.some(item => item.id === channel.id)) {
-    details.push(channel);
+    settings.set('details', [...details, channel]);
   }
 };
